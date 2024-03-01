@@ -99,7 +99,6 @@ def getLocalFrameMatrix(R_ij, t_ij):
     return T_ij
 
 def forward_kinematics(Phi, L1, L2, L3, L4):
-
     # Extracting individual joint angles
     theta1, theta2, theta3, theta4 = Phi
     
@@ -138,10 +137,14 @@ def main():
     L1 = 5   # Length of link 1
     L2 = 8   # Length of link 2
 
+    L3 = 3
+    
     # Joint angles 
     phi1 = 30     # Rotation angle of part 1 in degrees
     phi2 = -10    # Rotation angle of part 2 in degrees
     phi3 = 0      # Rotation angle of the end-effector in degrees
+
+    phi30 = 5
 
     # Matrix of Frame 1 (written w.r.t. Frame 0, which is the previous frame) 
     R_01 = RotationMatrix(phi1, axis_name = 'z')   # Rotation matrix
@@ -153,19 +156,21 @@ def main():
     # Create the coordinate frame mesh and transform
     Frame1Arrows = createCoordinateFrameMesh()
 
+    # Also create a sphere to show as an example of a joint
+    r1 = 0.4
+
     # Now, let's create a cylinder and add it to the local coordinate frame
     link1_mesh = Cylinder(r=0.4, 
                           height=L1, 
-                          pos = (L1/2,0,0),
+                          pos = (r1 + L1/2,0,0),
                           c="yellow", 
                           alpha=.8, 
                           axis=(1,0,0)
                           )
 
-    # Also create a sphere to show as an example of a joint
-    r1 = 0.4
-    sphere1 = Sphere(r=r1).pos(-r1,0,0).color("gray").alpha(.8)
 
+    #sphere1 = Sphere(r=r1).pos(-r1,0,0).color("gray").alpha(.8)
+    sphere1 = Sphere(r=r1).color("gray").alpha(.8)
     # Combine all parts into a single object 
     Frame1 = Frame1Arrows + link1_mesh + sphere1
 
@@ -174,7 +179,7 @@ def main():
 
     # Matrix of Frame 2 (written w.r.t. Frame 1, which is the previous frame)     
     R_12 = RotationMatrix(phi2, axis_name = 'z')   # Rotation matrix
-    p2   = np.array([[L1],[0.0], [0.0]])           # Frame's origin (w.r.t. previous frame)
+    p2   = np.array([[L1 + 2 * r1],[0.0], [0.0]])           # Frame's origin (w.r.t. previous frame)
     t_12 = p2                                      # Translation vector
 
     # Matrix of Frame 2 w.r.t. Frame 1 
@@ -189,21 +194,23 @@ def main():
     # Now, let's create a cylinder and add it to the local coordinate frame
     link2_mesh = Cylinder(r=0.4, 
                           height=L2, 
-                          pos = (L2/2,0,0),
+                          pos = (r1 + L2/2,0,0),
                           c="red", 
                           alpha=.8, 
                           axis=(1,0,0)
                           )
 
+    #sphere2 = Sphere(r=r1).pos(-r1,0,0).color("gray").alpha(.8)
+    sphere2 = Sphere(r=r1).color("gray").alpha(.8)
     # Combine all parts into a single object 
-    Frame2 = Frame2Arrows + link2_mesh
+    Frame2 = Frame2Arrows + link2_mesh + sphere2
 
     # Transform the part to position it at its correct location and orientation 
     Frame2.apply_transform(T_02)
 
     # Matrix of Frame 3 (written w.r.t. Frame 2, which is the previous frame)     
     R_23 = RotationMatrix(phi3, axis_name = 'z')   # Rotation matrix
-    p3   = np.array([[L2],[0.0], [0.0]])           # Frame's origin (w.r.t. previous frame)
+    p3   = np.array([[L2 + 2 * r1],[0.0], [0.0]])           # Frame's origin (w.r.t. previous frame)
     t_23 = p3                                      # Translation vector
 
     # Matrix of Frame 3 w.r.t. Frame 2 
@@ -214,20 +221,26 @@ def main():
 
     # Create the coordinate frame mesh and transform. This point is the end-effector. So, I am 
     # just creating the coordinate frame. 
-    Frame3 = createCoordinateFrameMesh()
+    #Frame3 = createCoordinateFrameMesh()
+    
+    link3_mesh = Cylinder(r=0.4, 
+                          height=L3, 
+                          pos = (r1 + L3/2,0,0),
+                          c="red", 
+                          alpha=.8, 
+                          axis=(1,0,0)
+                          )
 
+    sphere3 = Sphere(r=r1).color("gray").alpha(.8)
+
+    Frame3Arrows = createCoordinateFrameMesh()
+    Frame3 = Frame3Arrows + link3_mesh + sphere3
+    Frame3.apply_transform(T_03)
     # Transform the part to position it at its correct location and orientation 
-    Frame3.apply_transform(T_03)  
+    # Frame3.apply_transform(T_03)  
 
     # Show everything 
     show([Frame1, Frame2, Frame3], axes, viewup="z").close()
-    
-    # Lentghs of the parts
-    L1, L2, L3, L4 = [5, 8, 3, 0]
-    # Retrieve pose matrices and end-effector coordinates
-    # for a given configuration of Phi = [ phi1, phi2, phi3, phi4 ]
-    Phi = np.array([-30, 50, 30, 0])
-    T_01, T_02, T_03, T_04, e = forward_kinematics(Phi, L1, L2, L3, L4)
    
 
 if __name__ == '__main__':
