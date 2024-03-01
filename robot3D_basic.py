@@ -98,30 +98,38 @@ def getLocalFrameMatrix(R_ij, t_ij):
     
     return T_ij
 
-def forward_kinematics(L1, L2, phi1, phi2, phi3):
-    """Calculate forward kinematics."""
-    # Matrix of Frame 1 w.r.t. Frame 0
-    R_01 = RotationMatrix(phi1, axis_name='z')
-    p1 = np.array([[3], [2], [0.0]])  # Frame's origin (w.r.t. previous frame)
-    t_01 = p1                          # Translation vector
-    T_01 = getLocalFrameMatrix(R_01, t_01)
+def forward_kinematics(Phi, L1, L2, L3, L4):
 
-    # Matrix of Frame 2 w.r.t. Frame 1
-    R_12 = RotationMatrix(phi2, axis_name='z')
-    p2 = np.array([[L1], [0.0], [0.0]])  # Frame's origin (w.r.t. previous frame)
-    t_12 = p2                            # Translation vector
-    T_12 = getLocalFrameMatrix(R_12, t_12)
-
-    # Matrix of Frame 3 w.r.t. Frame 2
-    R_23 = RotationMatrix(phi3, axis_name='z')
-    p3 = np.array([[L2], [0.0], [0.0]])  # Frame's origin (w.r.t. previous frame)
-    t_23 = p3                            # Translation vector
-    T_23 = getLocalFrameMatrix(R_23, t_23)
-
-    # Matrix of Frame 3 w.r.t. Frame 0 (world frame)
-    T_03 = T_23 @ T_12 @ T_01
-
-    return T_03
+    # Extracting individual joint angles
+    theta1, theta2, theta3, theta4 = Phi
+    
+    # Transformation matrices
+    T_01 = np.array([[np.cos(theta1), -np.sin(theta1), 0, 0],
+                     [np.sin(theta1), np.cos(theta1), 0, 0],
+                     [0, 0, 1, 0],
+                     [0, 0, 0, 1]])
+    
+    T_12 = np.array([[np.cos(theta2), -np.sin(theta2), 0, L1],
+                     [0, 0, -1, 0],
+                     [np.sin(theta2), np.cos(theta2), 0, 0],
+                     [0, 0, 0, 1]])
+    
+    T_23 = np.array([[np.cos(theta3), -np.sin(theta3), 0, L2],
+                     [0, 0, 1, 0],
+                     [-np.sin(theta3), -np.cos(theta3), 0, 0],
+                     [0, 0, 0, 1]])
+    
+    T_34 = np.array([[np.cos(theta4), -np.sin(theta4), 0, L3],
+                     [0, 0, -1, 0],
+                     [np.sin(theta4), np.cos(theta4), 0, 0],
+                     [0, 0, 0, 1]])
+    
+    T_04 = np.dot(np.dot(np.dot(T_01, T_12), T_23), T_34)
+    
+    # End-effector position
+    e = T_04[:3, 3]
+    print(e)
+    return T_01, np.dot(T_01, T_12), np.dot(np.dot(T_01, T_12), T_23), T_04, e
 
 def main():
     # Set the limits of the graph x, y, and z ranges 
@@ -213,6 +221,13 @@ def main():
 
     # Show everything 
     show([Frame1, Frame2, Frame3], axes, viewup="z").close()
+    
+    # Lentghs of the parts
+    L1, L2, L3, L4 = [5, 8, 3, 0]
+    # Retrieve pose matrices and end-effector coordinates
+    # for a given configuration of Phi = [ phi1, phi2, phi3, phi4 ]
+    Phi = np.array([-30, 50, 30, 0])
+    T_01, T_02, T_03, T_04, e = forward_kinematics(Phi, L1, L2, L3, L4)
    
 
 if __name__ == '__main__':
