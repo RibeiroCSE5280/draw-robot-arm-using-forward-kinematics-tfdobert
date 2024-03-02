@@ -99,36 +99,41 @@ def getLocalFrameMatrix(R_ij, t_ij):
     return T_ij
 
 def forward_kinematics(Phi, L1, L2, L3, L4):
-    # Extracting individual joint angles
-    theta1, theta2, theta3, theta4 = Phi
+    r1 = 0.4
     
-    # Transformation matrices
-    T_01 = np.array([[np.cos(theta1), -np.sin(theta1), 0, 0],
-                     [np.sin(theta1), np.cos(theta1), 0, 0],
-                     [0, 0, 1, 0],
-                     [0, 0, 0, 1]])
+    # Matrix 1
+    R_01 = RotationMatrix(Phi[0], axis_name = 'z')   
+    p1   = np.array([[3],[2], [0.0]])              
+    t_01 = p1                                         
+    T_01 = getLocalFrameMatrix(R_01, t_01)
     
-    T_12 = np.array([[np.cos(theta2), -np.sin(theta2), 0, L1],
-                     [0, 0, -1, 0],
-                     [np.sin(theta2), np.cos(theta2), 0, 0],
-                     [0, 0, 0, 1]])
+    # Matrix 2     
+    R_12 = RotationMatrix(Phi[1], axis_name = 'z') 
+    p2   = np.array([[L1 + 2 * r1],[0.0], [0.0]])
+    t_12 = p2                                     
+    T_12 = getLocalFrameMatrix(R_12, t_12)
+
+    T_02 = T_01 @ T_12
     
-    T_23 = np.array([[np.cos(theta3), -np.sin(theta3), 0, L2],
-                     [0, 0, 1, 0],
-                     [-np.sin(theta3), -np.cos(theta3), 0, 0],
-                     [0, 0, 0, 1]])
+    # Matrix 3
+    R_23 = RotationMatrix(Phi[2], axis_name = 'z')
+    p3   = np.array([[L2 + 2 * r1],[0.0], [0.0]])
+    t_23 = p3
+    T_23 = getLocalFrameMatrix(R_23, t_23)
+
+    T_03 = T_01 @ T_12 @ T_23
     
-    T_34 = np.array([[np.cos(theta4), -np.sin(theta4), 0, L3],
-                     [0, 0, -1, 0],
-                     [np.sin(theta4), np.cos(theta4), 0, 0],
-                     [0, 0, 0, 1]])
+    # Matrix 4?
+    R_34 = RotationMatrix(Phi[3], axis_name = 'z')
+    p4   = np.array([[L3 + 2 * r1],[0.0], [0.0]])
+    t_34 = p4
+    T_34 = getLocalFrameMatrix(R_34, t_34)
+
+    T_04 = T_01 @ T_12 @ T_23 @ T_34
     
-    T_04 = np.dot(np.dot(np.dot(T_01, T_12), T_23), T_34)
-    
-    # End-effector position
-    e = T_04[:3, 3]
-    print(e)
-    return T_01, np.dot(T_01, T_12), np.dot(np.dot(T_01, T_12), T_23), T_04, e
+    e = T_04[0:3, -1]
+        
+    return T_01, T_02, T_03, T_04, e
 
 def main():
     # Set the limits of the graph x, y, and z ranges 
@@ -136,15 +141,12 @@ def main():
     # Lengths of arm parts 
     L1 = 5   # Length of link 1
     L2 = 8   # Length of link 2
-
     L3 = 3
     
     # Joint angles 
     phi1 = 30     # Rotation angle of part 1 in degrees
     phi2 = -10    # Rotation angle of part 2 in degrees
     phi3 = 0      # Rotation angle of the end-effector in degrees
-
-    phi30 = 5
 
     # Matrix of Frame 1 (written w.r.t. Frame 0, which is the previous frame) 
     R_01 = RotationMatrix(phi1, axis_name = 'z')   # Rotation matrix
@@ -158,7 +160,6 @@ def main():
 
     # Also create a sphere to show as an example of a joint
     r1 = 0.4
-
     # Now, let's create a cylinder and add it to the local coordinate frame
     link1_mesh = Cylinder(r=0.4, 
                           height=L1, 
@@ -167,9 +168,6 @@ def main():
                           alpha=.8, 
                           axis=(1,0,0)
                           )
-
-
-    #sphere1 = Sphere(r=r1).pos(-r1,0,0).color("gray").alpha(.8)
     sphere1 = Sphere(r=r1).color("gray").alpha(.8)
     # Combine all parts into a single object 
     Frame1 = Frame1Arrows + link1_mesh + sphere1
@@ -235,9 +233,8 @@ def main():
 
     Frame3Arrows = createCoordinateFrameMesh()
     Frame3 = Frame3Arrows + link3_mesh + sphere3
-    Frame3.apply_transform(T_03)
     # Transform the part to position it at its correct location and orientation 
-    # Frame3.apply_transform(T_03)  
+    Frame3.apply_transform(T_03)  
 
     # Show everything 
     show([Frame1, Frame2, Frame3], axes, viewup="z").close()
