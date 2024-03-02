@@ -139,21 +139,28 @@ def main():
     # Set the limits of the graph x, y, and z ranges 
     axes = Axes(xrange=(0,20), yrange=(-2,10), zrange=(0,6))  
     # Lengths of arm parts 
-    L1 = 5   # Length of link 1
-    L2 = 8   # Length of link 2
+    L1 = 5
+    L2 = 8
     L3 = 3
+    L4 = 0
     
     # Joint angles 
-    phi1 = 30     # Rotation angle of part 1 in degrees
-    phi2 = -10    # Rotation angle of part 2 in degrees
-    phi3 = 0      # Rotation angle of the end-effector in degrees
-
+    phi1 = 30     
+    phi2 = -10   
+    phi3 = 0     
+    phi4 = 2
+    
+    joint_angles = [phi1, phi2, phi3, phi4]
+    
+    # Call our Kinematics 
+    forward_kinematics(joint_angles,L1,L2,L3,L4)
+    
     # Matrix of Frame 1 (written w.r.t. Frame 0, which is the previous frame) 
-    R_01 = RotationMatrix(phi1, axis_name = 'z')   # Rotation matrix
-    p1   = np.array([[3],[2], [0.0]])              # Frame's origin (w.r.t. previous frame)
-    t_01 = p1                                      # Translation vector
+    #R_01 = RotationMatrix(phi1, axis_name = 'z')   # Rotation matrix
+    #p1   = np.array([[3],[2], [0.0]])              # Frame's origin (w.r.t. previous frame)
+    #t_01 = p1                                      # Translation vector
 
-    T_01 = getLocalFrameMatrix(R_01, t_01)         # Matrix of Frame 1 w.r.t. Frame 0 (i.e., the world frame)
+    #T_01 = getLocalFrameMatrix(R_01, t_01)         # Matrix of Frame 1 w.r.t. Frame 0 (i.e., the world frame)
 
     # Create the coordinate frame mesh and transform
     Frame1Arrows = createCoordinateFrameMesh()
